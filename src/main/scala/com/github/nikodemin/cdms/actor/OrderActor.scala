@@ -4,19 +4,19 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
-import com.github.nikodemin.cdms.model.dto.OrderDto
+import com.github.nikodemin.cdms.proto.OrderAdd
 
 
 object OrderActor {
 
   sealed trait Command
 
-  case class Add(order: OrderDto) extends Command
+  case class Add(order: OrderAdd) extends Command
 
 
   sealed trait Event
 
-  case class OrderAdded(order: OrderDto) extends Event
+  case class OrderAdded(order: OrderAdd) extends Event
 
 
   sealed trait State

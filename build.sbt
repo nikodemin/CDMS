@@ -11,4 +11,4 @@ dockerBaseImage := "adoptopenjdk/openjdk15:alpine"
 
 dockerExposedPorts += 9002
 
-enablePlugins(JavaAppPackaging, DockerPlugin)
+enablePlugins(JavaAppPackaging, DockerPlugin, AkkaGrpcPlugin)

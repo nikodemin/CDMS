@@ -3,9 +3,7 @@ import sbt._
 object BuildConfig {
 
   object versions {
-    val circe = "0.14.0-M1"
-
-    val tapir = "0.17.0-M2"
+    val monocle = "2.0.3"
 
     val scalactic = "3.2.0"
     val scalatest = "3.2.0"
@@ -38,21 +36,6 @@ object BuildConfig {
     "commons-io" % "commons-io" % versions.`commons-io`
   ).map(_ % Test)
 
-  val circeDependencies = Seq(
-    "io.circe" %% "circe-core",
-    "io.circe" %% "circe-generic",
-    "io.circe" %% "circe-parser"
-  ).map(_ % versions.circe)
-
-  val tapirDependencies = Seq(
-    "com.softwaremill.sttp.tapir" %% "tapir-core",
-    "com.softwaremill.sttp.tapir" %% "tapir-json-circe",
-    "com.softwaremill.sttp.tapir" %% "tapir-openapi-docs",
-    "com.softwaremill.sttp.tapir" %% "tapir-openapi-circe-yaml",
-    "com.softwaremill.sttp.tapir" %% "tapir-akka-http-server",
-    "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-akka-http"
-  ).map(_ % versions.tapir)
-
   val logDependencies = Seq(
     "org.slf4j" % "slf4j-api" % versions.slf4j,
     "ch.qos.logback" % "logback-classic" % versions.logback
@@ -69,7 +52,10 @@ object BuildConfig {
     "com.typesafe.akka" %% "akka-http-spray-json" % versions.akkaSprayJson
   )
 
-  val projectDependencies: Seq[ModuleID] = testDependencies ++ circeDependencies ++
-    logDependencies ++ tapirDependencies ++ akkaDependencies
+  val monocleDependencies = Seq(
+    "com.github.julien-truffaut" %% "monocle-core",
+    "com.github.julien-truffaut" %% "monocle-macro"
+  ).map(_ % versions.monocle)
 
+  val projectDependencies: Seq[ModuleID] = testDependencies ++ logDependencies ++ akkaDependencies ++ monocleDependencies
 }

@@ -1,0 +1,196 @@
+syntax = "proto2";
+
+option java_package = "com.github.nikodemin.cdms.proto";
+
+// Services
+
+service OrderService {
+  rpc add(OrderAdd) returns (GenericResponse);
+  rpc changeState(OrderStateChange) returns (GenericResponse);
+}
+
+service ProductService {
+  rpc add(ProductAdd) returns (GenericResponse);
+  rpc delete(ProductDelete) returns (GenericResponse);
+  rpc modify(ProductModify) returns (GenericResponse);
+}
+
+service CommentService {
+  rpc add(CommentAdd) returns (GenericResponse);
+  rpc delete(CommentDelete) returns (GenericResponse);
+  rpc modify(CommentModify) returns (GenericResponse);
+}
+
+service UserService {
+  rpc add(UserAdd) returns (GenericResponse);
+  rpc delete(UserDelete) returns (GenericResponse);
+  rpc modify(UserModify) returns (GenericResponse);
+}
+
+// Common models
+
+message GenericResponse {
+  required bool isSuccessful = 1;
+  optional string errorMessage = 2;
+  optional string entityId = 3;
+  optional uint32 errorCode = 4;
+}
+
+message PersonInfoAdd {
+  required string firstName = 1;
+  required string lastName = 2;
+  optional string email = 3;
+  required string phoneNumber = 4;
+}
+
+message AddressInfoAdd {
+  required string country = 1;
+  required string city = 2;
+  required string street = 3;
+  required uint32 homeNumber = 4;
+  optional string homeAddition = 5;
+  required uint32 flatNumber = 6;
+}
+
+// User models
+
+enum UserRole {
+  CUSTOMER = 0;
+  ADMIN = 1;
+  MANAGER = 2;
+  STORE_KEEPER = 3;
+}
+
+message UserAdd {
+  required PersonInfoAdd personInfo = 1;
+  required string passwordHash = 2;
+  repeated UserRole roles = 3;
+  optional AddressInfoAdd residencePlace = 4;
+  optional string avatarPath = 5;
+}
+
+message UserDelete {
+  repeated string ids = 1;
+}
+
+message UserModify {
+  optional string firstName = 1;
+  optional string lastName = 2;
+  optional string email = 3;
+  optional string phoneNumber = 4;
+  optional string passwordHash = 5;
+  optional UserRole roles = 6;
+  optional string country = 7;
+  optional string city = 8;
+  optional string street = 9;
+  optional uint32 homeNumber = 10;
+  optional string homeAddition = 11;
+  optional uint32 flatNumber = 12;
+  optional string avatarPath = 13;
+}
+
+// Comment models
+
+message CommentAdd {
+  required string authorId = 1;
+  required string text = 2;
+  required string productId = 3;
+  required string parentId = 4;
+  repeated string imagePaths = 5;
+}
+
+message CommentDelete {
+  required string id = 1;
+}
+
+message CommentModify {
+  required string id = 1;
+  optional string text = 2;
+  optional string imagePaths = 3;
+  optional uint32 addEstimation = 4;
+  optional string estimationAuthorId = 5;
+}
+
+
+// Product models
+
+message ProductAdd {
+  required string name = 1;
+  optional uint32 available = 2;
+  required uint32 price = 3;
+  required string description = 4;
+  repeated string imagePaths = 5;
+}
+
+message ProductDelete {
+  repeated string ids = 1;
+}
+
+message ProductModify {
+  required string id = 1;
+  optional string name = 2;
+  optional uint32 available = 3;
+  optional uint32 price = 4;
+  optional string description = 5;
+  repeated string imagePaths = 6;
+}
+
+// Order models
+
+message OrderStateChange {
+  required State newState = 1;
+
+  enum State {
+    PENDING = 0;
+    ACKNOWLEDGED = 1;
+    IN_DELIVERY = 2;
+    CANCELLED = 3;
+    COMPLETED = 4;
+    REJECTED = 5;
+    FAILED = 6;
+  }
+}
+
+message OrderAdd {
+  required PaymentInfo paymentInfo = 1;
+  oneof delivery {
+    PostalDelivery postalDelivery = 2;
+    CourierDelivery courierDelivery = 3;
+    PickUpDelivery pickUpDelivery = 4;
+  }
+  required string customerId = 5;
+  repeated string productIds = 6;
+}
+
+message PostalDelivery {
+  required string zipCode = 1;
+  optional string country = 2;
+  optional string city = 3;
+}
+
+message CourierDelivery {
+  required string addressInfo = 1;
+}
+
+message PickUpDelivery {
+  required string pickUpPointId = 1;
+}
+
+message PaymentInfo {
+  required uint64 amount = 1;
+  optional string currency = 2;
+  required PaymentMethod paymentMethod = 3;
+  optional CreditCard creditCard = 4;
+
+  enum PaymentMethod {
+    CARD = 0;
+    CASH = 1;
+  }
+}
+
+message CreditCard {
+  required string number = 1;
+  required string cardHolder = 2;
+  required string dueDate = 3;
+  required uint32 cvv = 4;
+}
