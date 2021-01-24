@@ -7,11 +7,9 @@ object BuildConfig {
 
     val monocle = "2.0.3"
 
-    val scalactic = "3.2.0"
-    val scalatest = "3.2.0"
-    val scalacheck = "1.14.3"
-    val `scalacheck-1-14` = "3.2.0.0"
-    val scalamock = "5.0.0"
+    val scalatest = "3.3.0-SNAP3"
+    val scalacheck = "3.3.0.0-SNAP2"
+    val scalamock = "5.1.0"
 
     val slf4j = "1.7.30"
     val logback = "1.2.3"
@@ -26,10 +24,8 @@ object BuildConfig {
   }
 
   val testDependencies = Seq(
-    "org.scalactic" %% "scalactic" % versions.scalactic,
     "org.scalatest" %% "scalatest" % versions.scalatest,
-    "org.scalacheck" %% "scalacheck" % versions.scalacheck,
-    "org.scalatestplus" %% "scalacheck-1-14" % versions.`scalacheck-1-14`,
+    "org.scalatestplus" %% "scalacheck-1-14" % versions.scalacheck,
     "org.scalamock" %% "scalamock" % versions.scalamock,
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % versions.`scalacheck-shapeless_1.14`,
     "com.github.chocpanda" %% "scalacheck-magnolia" % versions.`scalacheck-magnolia`,

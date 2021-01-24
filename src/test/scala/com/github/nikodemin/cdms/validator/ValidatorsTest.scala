@@ -36,19 +36,22 @@ class ValidatorsTest extends AnyWordSpecLike
           localDate <- localDateGen
           uuidSeq <- uuidSeqGen
           currency <- currencyGen
-          positiveInt <- Gen.posNum[Int]
-          positiveLong <- Gen.posNum[Long]
+          positiveInt <- Gen.posNum[Int].filter(_ > 0)
+          positiveLong <- Gen.posNum[Long].filter(_ > 0)
           notBlankString <- notBlankStringGen
           cvv <- cvvGen
           uuid <- Gen.uuid
         } yield (localDate, uuidSeq, currency, positiveInt, positiveLong, notBlankString, cvv, uuid)
       } { case (localDate, uuidSeq, currency, positiveInt, positiveLong, notBlankString, cvv, uuid) =>
+        log.info(s"cvv = $cvv, notBlankString = $notBlankString")
         val creditCard = CreditCard(notBlankString, notBlankString, localDate.toString, cvv)
         val paymentInfoCard = PaymentInfo(positiveLong, currency, PaymentMethod.CARD, Some(creditCard))
         val paymentInfoCash = PaymentInfo(positiveLong, currency, PaymentMethod.CASH)
         val postalDelivery = Delivery.PostalDelivery(PostalDelivery(notBlankString, Some(notBlankString), Option(notBlankString)))
         val courierDelivery = Delivery.CourierDelivery(CourierDelivery(AddressInfoAdd(notBlankString, notBlankString, notBlankString, positiveInt, None, positiveInt)))
         val pickUpDelivery = Delivery.PickUpDelivery(PickUpDelivery(uuid.toString))
+
+        log.info(s"payment info card = $paymentInfoCard")
 
         forAll {
           for {
