@@ -169,7 +169,7 @@ message PostalDelivery {
 }
 
 message CourierDelivery {
-  required string addressInfo = 1;
+  required AddressInfoAdd addressInfo = 1;
 }
 
 message PickUpDelivery {

@@ -21,10 +21,14 @@ object Validators {
     def validateCustomerId: Seq[Error] = Try(UUID.fromString(orderAdd.customerId)).toEither
       .fold(_ => Seq(Error("orderAdd.customerId", "Failed to parse UUID")), _ => Seq())
 
-    def validateProductIds: Seq[Error] = orderAdd.productIds.map(id => Try(UUID.fromString(id)).toOption)
-      .zipWithIndex
-      .filter(_._1.isEmpty)
-      .map(e => Error(s"orderAdd.productIds[${e._2}]", "Failed to parse UUID"))
+    def validateProductIds: Seq[Error] = {
+      val ids = orderAdd.productIds
+      if (ids.isEmpty) Seq(Error("orderAdd.productIds", "Product list is empty")) else
+        ids.map(id => Try(UUID.fromString(id)).toOption)
+          .zipWithIndex
+          .filter(_._1.isEmpty)
+          .map(e => Error(s"orderAdd.productIds[${e._2}]", "Failed to parse UUID"))
+    }
 
     def validatePaymentInfo: Seq[Error] = {
 
@@ -32,9 +36,9 @@ object Validators {
 
       def validateAmount: Seq[Error] = if (paymentInfo.amount > 0) Seq() else Seq(Error("orderAdd.paymentInfo.amount", "Negative amount"))
 
-      def validateCurrency: Seq[Error] = paymentInfo.currency.fold(Seq()) {
+      def validateCurrency: Seq[Error] = paymentInfo.currency.map {
         currency => if (currencies.contains(currency)) Seq() else Seq(Error("orderAdd.paymentInfo.currency", s"Unsuppoorted currency value: $currency"))
-      }
+      }.getOrElse(Seq())
 
       def validateCreditCard: Seq[Error] = paymentInfo.creditCard.fold(Seq(Error("orderAdd.paymentInfo.creditCard", "Credit card is empty"))) { cc =>
         Seq(
@@ -46,6 +50,18 @@ object Validators {
       }
 
       (if (paymentInfo.paymentMethod.isCard) validateCreditCard else Seq()) ++ validateAmount ++ validateCurrency
+    }
+
+    def validateDelivery: Seq[Error] = {
+      val delivery = orderAdd.delivery
+
+      def validateCourierDelivery: Seq[Error] = delivery.courierDelivery.map { courierDelivery =>
+        val addressInfo = courierDelivery.addressInfo
+        addressInfo
+        .
+      }
+
+      if (delivery.isCourierDelivery)
     }
 
     validateCustomerId ++ validateProductIds ++ validatePaymentInfo

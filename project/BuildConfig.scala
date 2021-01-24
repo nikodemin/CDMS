@@ -3,6 +3,8 @@ import sbt._
 object BuildConfig {
 
   object versions {
+    val `scalacheck-magnolia` = "0.5.1"
+
     val monocle = "2.0.3"
 
     val scalactic = "3.2.0"
@@ -30,6 +32,7 @@ object BuildConfig {
     "org.scalatestplus" %% "scalacheck-1-14" % versions.`scalacheck-1-14`,
     "org.scalamock" %% "scalamock" % versions.scalamock,
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % versions.`scalacheck-shapeless_1.14`,
+    "com.github.chocpanda" %% "scalacheck-magnolia" % versions.`scalacheck-magnolia`,
     "com.typesafe.akka" %% "akka-actor-testkit-typed" % versions.akka,
     "com.typesafe.akka" %% "akka-persistence-testkit" % versions.akka,
     "com.typesafe.akka" %% "akka-stream-testkit" % versions.akka,
