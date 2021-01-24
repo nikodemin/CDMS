@@ -3,15 +3,13 @@ import sbt._
 object BuildConfig {
 
   object versions {
-    val circe = "0.14.0-M1"
+    val `scalacheck-magnolia` = "0.5.1"
 
-    val tapir = "0.17.0-M2"
+    val monocle = "2.0.3"
 
-    val scalactic = "3.2.0"
-    val scalatest = "3.2.0"
-    val scalacheck = "1.14.3"
-    val `scalacheck-1-14` = "3.2.0.0"
-    val scalamock = "5.0.0"
+    val scalatest = "3.3.0-SNAP3"
+    val scalacheck = "3.3.0.0-SNAP2"
+    val scalamock = "5.1.0"
 
     val slf4j = "1.7.30"
     val logback = "1.2.3"
@@ -26,32 +24,16 @@ object BuildConfig {
   }
 
   val testDependencies = Seq(
-    "org.scalactic" %% "scalactic" % versions.scalactic,
     "org.scalatest" %% "scalatest" % versions.scalatest,
-    "org.scalacheck" %% "scalacheck" % versions.scalacheck,
-    "org.scalatestplus" %% "scalacheck-1-14" % versions.`scalacheck-1-14`,
+    "org.scalatestplus" %% "scalacheck-1-14" % versions.scalacheck,
     "org.scalamock" %% "scalamock" % versions.scalamock,
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % versions.`scalacheck-shapeless_1.14`,
+    "com.github.chocpanda" %% "scalacheck-magnolia" % versions.`scalacheck-magnolia`,
     "com.typesafe.akka" %% "akka-actor-testkit-typed" % versions.akka,
     "com.typesafe.akka" %% "akka-persistence-testkit" % versions.akka,
     "com.typesafe.akka" %% "akka-stream-testkit" % versions.akka,
     "commons-io" % "commons-io" % versions.`commons-io`
   ).map(_ % Test)
-
-  val circeDependencies = Seq(
-    "io.circe" %% "circe-core",
-    "io.circe" %% "circe-generic",
-    "io.circe" %% "circe-parser"
-  ).map(_ % versions.circe)
-
-  val tapirDependencies = Seq(
-    "com.softwaremill.sttp.tapir" %% "tapir-core",
-    "com.softwaremill.sttp.tapir" %% "tapir-json-circe",
-    "com.softwaremill.sttp.tapir" %% "tapir-openapi-docs",
-    "com.softwaremill.sttp.tapir" %% "tapir-openapi-circe-yaml",
-    "com.softwaremill.sttp.tapir" %% "tapir-akka-http-server",
-    "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-akka-http"
-  ).map(_ % versions.tapir)
 
   val logDependencies = Seq(
     "org.slf4j" % "slf4j-api" % versions.slf4j,
@@ -69,7 +51,10 @@ object BuildConfig {
     "com.typesafe.akka" %% "akka-http-spray-json" % versions.akkaSprayJson
   )
 
-  val projectDependencies: Seq[ModuleID] = testDependencies ++ circeDependencies ++
-    logDependencies ++ tapirDependencies ++ akkaDependencies
+  val monocleDependencies = Seq(
+    "com.github.julien-truffaut" %% "monocle-core",
+    "com.github.julien-truffaut" %% "monocle-macro"
+  ).map(_ % versions.monocle)
 
+  val projectDependencies: Seq[ModuleID] = testDependencies ++ logDependencies ++ akkaDependencies ++ monocleDependencies
 }
