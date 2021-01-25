@@ -1,40 +1,44 @@
 package com.github.nikodemin.cdms.validator
 
 import java.time.LocalDate
-import java.util.UUID
 
-import cats.data.Validated
 import com.github.nikodemin.cdms.proto._
 import monocle.Lens
 import monocle.macros.GenLens
 
-import scala.util.Try
-
 object Validators {
-  type AllErrorsOr[A] = Validated[Error, A]
-
   val currencies = Set("RUB", "EUR", "USD")
 
-  case class Error(path: String, errorMessage: String)
+  case class Conditional(errors: Seq[Error]) {
+    def ifPassed(newErrors: Seq[Error]): Conditional = if (errors.isEmpty) Conditional(newErrors) else this
+  }
 
   case class Field[S, F](name: String, lens: Lens[S, F]) {
     def >=>[F2](field: Field[F, F2]) = Field(s"$name.${field.name}", lens.composeLens(field.lens))
 
-    def validate(source: S, validators: Seq[F => Option[String]]): Seq[Error] = {
+    def validate(validators: (F => Option[String])*)(implicit source: S): Seq[Error] = {
       val field = lens.get(source)
       validators.map(_ (field))
         .filter(_.isDefined)
         .map(errStr => Error(name, errStr.get))
     }
+
+    def validateSeq(validators: (F => Seq[String])*)(implicit source: S): Seq[Error] = {
+      val field = lens.get(source)
+      validators.flatMap(_ (field))
+        .map(errStr => Error(name, errStr))
+    }
   }
 
-  object Fields {
-    def empty[S, A]: A => S => S = _ => f => f
+  def empty[S, A]: A => S => S = _ => f => f
+
+  object OrderFields {
 
     object FromRoot {
       val customerId: Field[OrderAdd, String] = Field("orderAdd.customerId", GenLens[OrderAdd](_.customerId))
       val productIds: Field[OrderAdd, Seq[String]] = Field("orderAdd.productIds", GenLens[OrderAdd](_.productIds))
       val delivery: Field[OrderAdd, OrderAdd.Delivery] = Field("orderAdd.delivery", GenLens[OrderAdd](_.delivery))
+      val paymentInfo: Field[OrderAdd, PaymentInfo] = Field("orderAdd.paymentInfo", GenLens[OrderAdd](_.paymentInfo))
     }
 
     val courierDelivery: Field[OrderAdd.Delivery, Option[CourierDelivery]] = Field("courierDelivery", Lens[OrderAdd.Delivery, Option[CourierDelivery]]
@@ -69,108 +73,107 @@ object Validators {
     val postalDeliveryToCity: Field[Option[PostalDelivery], Option[String]] =
       Field("city", Lens[Option[PostalDelivery], Option[String]](_.flatMap(_.city))(empty))
 
-    object Implicits {
+    val paymentInfoToAmount: Field[PaymentInfo, Long] = Field("amount", GenLens[PaymentInfo](_.amount))
+    val paymentInfoToCurrency: Field[PaymentInfo, Option[String]] = Field("currency", GenLens[PaymentInfo](_.currency))
+    val paymentInfoToPaymentMethod: Field[PaymentInfo, PaymentInfo.PaymentMethod] = Field("paymentMethod", GenLens[PaymentInfo](_.paymentMethod))
+    val paymentInfoToCreditCard: Field[PaymentInfo, Option[CreditCard]] = Field("creditCard", GenLens[PaymentInfo](_.creditCard))
 
-      implicit class StringValidations[S](field: Field[S, Option[String]]) {
-        def validateRequiredAndLength(length: Int)(implicit source: S): Seq[Error] = field.validate(source, Seq(
-          f => f.map(f2 => if (f2.length > length) Some(s"${field.name} is too long") else None).getOrElse(Some(s"${field.name} is empty"))
-        ))
-
-        def validateLength(length: Int)(implicit source: S): Seq[Error] = field.validate(source, Seq(
-          f => f.flatMap(f2 => if (f2.length > length) Some(s"${field.name} is too long") else None)
-        ))
-
-        def validateRequiredAndUUID(implicit source: S): Seq[Error] = field.validate(source, Seq(
-          f => f.map(f2 => Try(UUID.fromString(f2)).toEither.fold(_ => Some(s"${field.name} cannot be parsed as UUID"), _ => None))
-            .getOrElse(Some(s"${field.name} is empty"))
-        ))
-      }
-
-      implicit class Validations[S, D](field: Field[S, Option[D]]) {
-        def validateRequired(implicit source: S): Seq[Error] = field.validate(source, Seq(
-          f => if (f.isEmpty) Some(s"${field.name} is requred") else None
-        ))
-      }
-
-    }
-
+    val creditCardToCvv: Field[Option[CreditCard], Option[Int]] = Field("cvv", Lens[Option[CreditCard], Option[Int]](_.map(_.cvv))(empty))
+    val creditCardToCardHolder: Field[Option[CreditCard], Option[String]] = Field("cardHolder", Lens[Option[CreditCard], Option[String]](_.map(_.cardHolder))(empty))
+    val creditCardToNumber: Field[Option[CreditCard], Option[String]] = Field("number", Lens[Option[CreditCard], Option[String]](_.map(_.number))(empty))
+    val creditCardToDueDate: Field[Option[CreditCard], Option[String]] = Field("dueDate", Lens[Option[CreditCard], Option[String]](_.map(_.dueDate))(empty))
   }
 
+
   def validateOrder(implicit orderAdd: OrderAdd): Seq[Error] = {
-    import Fields.Implicits._
+    import Implicits._
 
-    def validateCustomerId: Seq[Error] = Try(UUID.fromString(orderAdd.customerId)).toEither
-      .fold(_ => Seq(Error("orderAdd.customerId", "Failed to parse UUID")), _ => Seq())
+    def validateCustomerId: Seq[Error] = OrderFields.FromRoot.customerId.validateUUID
 
-    def validateProductIds: Seq[Error] = {
-      val ids = orderAdd.productIds
-      if (ids.isEmpty) Seq(Error("orderAdd.productIds", "Product list is empty")) else
-        ids.map(id => Try(UUID.fromString(id)).toOption)
-          .zipWithIndex
-          .filter(_._1.isEmpty)
-          .map(e => Error(s"orderAdd.productIds[${e._2}]", "Failed to parse UUID"))
-    }
+    def validateProductIds: Seq[Error] = Conditional(OrderFields.FromRoot.productIds.validateNotEmpty)
+      .ifPassed {
+        OrderFields.FromRoot.productIds.validateUUIDElements
+      }
 
     def validatePaymentInfo: Seq[Error] = {
 
-      val paymentInfo = orderAdd.paymentInfo
+      val amountField = OrderFields.FromRoot.paymentInfo >=> OrderFields.paymentInfoToAmount
+      val currencyField = OrderFields.FromRoot.paymentInfo >=> OrderFields.paymentInfoToCurrency
+      val paymentMethodField = OrderFields.FromRoot.paymentInfo >=> OrderFields.paymentInfoToPaymentMethod
+      val creditCardField: Field[OrderAdd, Option[CreditCard]] = OrderFields.FromRoot.paymentInfo >=> OrderFields.paymentInfoToCreditCard
 
-      def validateAmount: Seq[Error] = if (paymentInfo.amount > 0) Seq() else Seq(Error("orderAdd.paymentInfo.amount", "Negative amount"))
+      val cvvField = creditCardField >=> OrderFields.creditCardToCvv
+      val cardHolderField = creditCardField >=> OrderFields.creditCardToCardHolder
+      val cardNumberField = creditCardField >=> OrderFields.creditCardToNumber
+      val cardDueDateField = creditCardField >=> OrderFields.creditCardToDueDate
 
-      def validateCurrency: Seq[Error] = paymentInfo.currency.map {
-        currency => if (currencies.contains(currency)) Seq() else Seq(Error("orderAdd.paymentInfo.currency", s"Unsuppoorted currency value: $currency"))
-      }.getOrElse(Seq())
-
-      def validateCreditCard: Seq[Error] = paymentInfo.creditCard.fold(Seq(Error("orderAdd.paymentInfo.creditCard", "Credit card is empty"))) { cc =>
-        Seq(
-          if (cc.cvv.toString.length == 3) None else Some(Error("orderAdd.paymentInfo.creditCard.cvv", "Cvv number should have length 3")),
-          Try(LocalDate.parse(cc.dueDate)).fold(_ => Some(Error("orderAdd.paymentInfo.creditCard.dueDate", "Cannot parse date")), _ => None),
-          if (cc.cardHolder.isBlank) Some(Error("orderAdd.paymentInfo.creditCard.cardHolder", "Card holder should not be empty")) else None,
-          if (cc.number.isBlank) Some(Error("orderAdd.paymentInfo.creditCard.number", "Card numner should not be empty")) else None
-        ).filter(_.isDefined).map(_.get)
-      }
-
-      (if (paymentInfo.paymentMethod.isCard) validateCreditCard else Seq()) ++ validateAmount ++ validateCurrency
+      (if (paymentMethodField.lens.get(orderAdd).isCard) {
+        creditCardField.validateRequired.ifPassed {
+          cvvField.validateRequired.ifPassed {
+            cvvField.validateLength(3)
+          } ++
+            cardHolderField.validateRequired.ifPassed {
+              cardHolderField.validateLength(100)
+            } ++
+            cardNumberField.validateRequired.ifPassed {
+              cardNumberField.validateLength(100)
+            } ++
+            cardDueDateField.validateRequired.ifPassed {
+              cardDueDateField.validateOnParseError(LocalDate.parse, "LocalDate")
+            }
+        }.errors
+      } else Seq()) ++
+        amountField.validatePositive ++
+        currencyField.validateOneOfOrAbsent(currencies.toSeq: _*)
     }
 
-    def validateDelivery = if (orderAdd.delivery.isCourierDelivery) {
-      val courierDeliveryField = Fields.FromRoot.delivery >=> Fields.courierDelivery
-      val addressInfoField = courierDeliveryField >=> Fields.courierDeliveryToAddressInfo
-      val countryField = addressInfoField >=> Fields.addressInfoToCountry
-      val cityField = addressInfoField >=> Fields.addressInfoToCity
-      val streetField = addressInfoField >=> Fields.addressInfoToStreet
-      val homeNumberField = addressInfoField >=> Fields.addressInfoToHomeNumber
-      val homeNumberAdditionField = addressInfoField >=> Fields.addressInfoToHomeNumberAddition
-      val flatNumberField = addressInfoField >=> Fields.addressInfoToFlatNumber
+    def validateDelivery: Seq[Error] = if (orderAdd.delivery.isCourierDelivery) {
+      val courierDeliveryField = OrderFields.FromRoot.delivery >=> OrderFields.courierDelivery
+      val addressInfoField = courierDeliveryField >=> OrderFields.courierDeliveryToAddressInfo
+      val countryField = addressInfoField >=> OrderFields.addressInfoToCountry
+      val cityField = addressInfoField >=> OrderFields.addressInfoToCity
+      val streetField = addressInfoField >=> OrderFields.addressInfoToStreet
+      val homeNumberField = addressInfoField >=> OrderFields.addressInfoToHomeNumber
+      val homeNumberAdditionField = addressInfoField >=> OrderFields.addressInfoToHomeNumberAddition
+      val flatNumberField = addressInfoField >=> OrderFields.addressInfoToFlatNumber
 
-      val errors = courierDeliveryField.validateRequired
-      if (errors.isEmpty) {
-        val errors2 = addressInfoField.validateRequired
-        if (errors2.isEmpty) {
-          countryField.validateRequiredAndLength(100) ++
-            cityField.validateRequiredAndLength(100) ++
-            streetField.validateRequiredAndLength(100) ++
+      courierDeliveryField.validateRequired
+        .ifPassed {
+          addressInfoField.validateRequired
+        }
+        .ifPassed {
+          countryField.validateRequired.ifPassed {
+            countryField.validateLength(100)
+          } ++
+            cityField.validateRequired.ifPassed {
+              cityField.validateLength(100)
+            } ++
+            streetField.validateRequired.ifPassed {
+              streetField.validateLength(100)
+            } ++
             homeNumberField.validateRequired ++
             homeNumberAdditionField.validateLength(5) ++
             flatNumberField.validateRequired
-        } else errors2
-      } else errors
-
+        }
     } else if (orderAdd.delivery.isPickUpDelivery) {
-      (Fields.FromRoot.delivery >=> Fields.pickUpDelivery >=> Fields.pickUpDeliveryToPickUpPointId).validateRequiredAndUUID
+      val pickUpPointId = OrderFields.FromRoot.delivery >=> OrderFields.pickUpDelivery >=> OrderFields.pickUpDeliveryToPickUpPointId
+      pickUpPointId.validateRequired.ifPassed {
+        pickUpPointId.validateUUID
+      }
     } else if (orderAdd.delivery.isPostalDelivery) {
-      val postalDeliveryField = Fields.FromRoot.delivery >=> Fields.postalDelivery
-      val zipCodeField = postalDeliveryField >=> Fields.postalDeliveryToZipCode
-      val countryField = postalDeliveryField >=> Fields.postalDeliveryToCountry
-      val cityField = postalDeliveryField >=> Fields.postalDeliveryToCity
+      val postalDeliveryField = OrderFields.FromRoot.delivery >=> OrderFields.postalDelivery
+      val zipCodeField = postalDeliveryField >=> OrderFields.postalDeliveryToZipCode
+      val countryField = postalDeliveryField >=> OrderFields.postalDeliveryToCountry
+      val cityField = postalDeliveryField >=> OrderFields.postalDeliveryToCity
 
-      val errors = postalDeliveryField.validateRequired
-
-      if (errors.isEmpty) {
-        zipCodeField.validateRequiredAndLength(20) ++
-          countryField.validateLength(100) ++
-          cityField.validateLength(100)
-      } else errors
+      Conditional(postalDeliveryField.validateRequired)
+        .ifPassed {
+          zipCodeField.validateRequired.ifPassed {
+            zipCodeField.validateLength(20)
+          } ++
+            countryField.validateLength(100) ++
+            cityField.validateLength(100)
+        }
     } else {
       Seq(Error("orderAdd.delivery", "Delivery is not set"))
     }
