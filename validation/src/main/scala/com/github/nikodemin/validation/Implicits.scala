@@ -1,8 +1,8 @@
-package com.github.nikodemin.cdms.validator
+package com.github.nikodemin.validation
 
 import java.util.UUID
 
-import com.github.nikodemin.cdms.validator.Validators.{Conditional, Field}
+import com.github.nikodemin.validation.Validators.{Conditional, Field}
 
 import scala.util.Try
 
