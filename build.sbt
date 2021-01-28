@@ -4,7 +4,7 @@ import sbt.Keys.version
 lazy val coreProject = (project in file("."))
   .enablePlugins(JavaAppPackaging, DockerPlugin, AkkaGrpcPlugin)
   .settings(
-    scalaVersion := "2.12.12",
+    scalaVersion := "2.13.1",
     name := "CDMS",
     version := "0.1",
     libraryDependencies ++= BuildConfig.projectDependencies,
@@ -14,8 +14,7 @@ lazy val coreProject = (project in file("."))
   .dependsOn(validationProject)
 
 lazy val validationProject = (project in file("validation"))
-  .enablePlugins(SbtPlugin)
   .settings(
-    scalaVersion := "2.12.12",
+    scalaVersion := "2.13.1",
     libraryDependencies ++= BuildConfig.monocleDependencies
   )

@@ -8,8 +8,6 @@ object Validators {
     def ifPassed(newErrors: Seq[Error]): Conditional = if (errors.isEmpty) Conditional(newErrors) else this
   }
 
-  case class FieldGen[S, F]()
-
   case class Field[S, F](name: String, lens: Lens[S, F]) {
     def >=>[F2](field: Field[F, F2]): Field[S, F2] = Field(s"$name.${field.name}", lens.composeLens(field.lens))
 
@@ -25,6 +23,8 @@ object Validators {
       validators.flatMap(_ (field))
         .map(errStr => Error(name, errStr))
     }
+
+    def to[F2](transform: F => F2): Field[S, F2] = this.copy(lens = lens.composeLens(Lens[F, F2](transform)(empty)))
   }
 
   def empty[S, A]: A => S => S = _ => f => f

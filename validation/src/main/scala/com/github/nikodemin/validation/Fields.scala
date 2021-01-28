@@ -1,35 +1,70 @@
 package com.github.nikodemin.validation
 
+import com.github.nikodemin.validation.Validators.Field
+
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
 
-abstract class Fields[T]
+abstract class Fields[S] {
+  def field[D](property: S => D): Field[S, D] = macro FieldsMacro.impl[S, D]
+}
 
-object FieldsMacro {
-  def genFieldsObj[T]: Fields[T] = macro impl[T]
+abstract class FieldsMonoid[S, M[_]] {
+  def field[D](property: S => D): Field[Option[S], Option[D]] = macro FieldsMacro.monoidImpl[S, D, M]
+}
 
-  def impl[T: c.WeakTypeTag](c: whitebox.Context): c.Expr[Fields[T]] = {
-    import c.universe._
+abstract class FieldsOption[S] extends FieldsMonoid[S, Option]
 
-    val tpe = weakTypeOf[T]
-    val fields = tpe.decls.collect {
-      case m: MethodSymbol if m.isCaseAccessor =>
-        val name = m.name.decodedName.toString
-        q"val ${stringToTermName(name + "Field")}: Field[${tpe.typeSymbol}, ${m.typeSignature}] = Field($name, Lens[${tpe.typeSymbol}, ${m.typeSignature}](_.$m)(_ => x => x))"
-    }
+class FieldsMacro(val c: whitebox.Context) {
+
+  import c.universe._
+
+  def impl[S: c.WeakTypeTag, D: c.WeakTypeTag](property: c.Expr[S => D]): c.Expr[Field[S, D]] = {
+    val sourceType = weakTypeOf[S]
+    val destinationType = weakTypeOf[D]
+
+    val q"($x) => $x2.$name" = property.tree
+
+    val field = sourceType.decls.collect {
+      case m: MethodSymbol =>
+        val methodName = m.name.decodedName.toString
+        if (name.toString().equals(methodName)) {
+          Some(q"Field($methodName, Lens[$sourceType, $destinationType]($property)(_ => x => x))")
+        } else None
+    }.filter(_.isDefined).map(_.get).head
+
     val result =
       q"""
         import com.github.nikodemin.validation.Validators.Field
-        import com.github.nikodemin.validation.Fields
         import monocle.Lens
 
-        object FieldsObj extends Fields[${tpe.typeSymbol}] {
-          ..$fields
-        }
-
-        FieldsObj
+        $field
        """
-    println(showCode(result))
-    c.Expr[Fields[T]](result)
+    c.Expr[Field[S, D]](result)
+  }
+
+  def monoidImpl[S: c.WeakTypeTag, D: c.WeakTypeTag, M[_]](property: c.Expr[S => D])(implicit mm: WeakTypeTag[M[_]]): c.Expr[Field[M[S], M[D]]] = {
+    val sourceType = weakTypeOf[S]
+    val destinationType = weakTypeOf[D]
+    val typeConstructorType: c.universe.Ident = Ident(weakTypeOf[M[_]].typeConstructor.typeSymbol)
+
+    val q"($x) => $x2.$name" = property.tree
+
+    val field = sourceType.decls.collect {
+      case m: MethodSymbol =>
+        val methodName = m.name.decodedName.toString
+        if (name.toString().equals(methodName)) {
+          Some(q"Field($methodName, Lens[$typeConstructorType[$sourceType],$typeConstructorType[$destinationType]](_.map($property))(_ => x => x))")
+        } else None
+    }.filter(_.isDefined).map(_.get).head
+
+    val result =
+      q"""
+        import com.github.nikodemin.validation.Validators.Field
+        import monocle.Lens
+
+        $field
+       """
+    c.Expr[Field[M[S], M[D]]](result)
   }
 }

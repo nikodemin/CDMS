@@ -7,6 +7,7 @@ import akka.event.slf4j.SLF4JLogging
 import com.github.nikodemin.cdms.proto.OrderAdd.Delivery
 import com.github.nikodemin.cdms.proto.PaymentInfo.PaymentMethod
 import com.github.nikodemin.cdms.proto._
+import com.github.nikodemin.cdms.validation.ValidationService
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -63,7 +64,7 @@ class ValidatorsTest extends AnyWordSpecLike
 
           log.info(s"test valid order: ${orderAdd.toProtoString}")
 
-//          Validators.validateOrder(orderAdd) should have size 0
+          ValidationService.validateOrder(orderAdd) should have size 0
         }
       }
     }
