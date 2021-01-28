@@ -1,3 +1,3 @@
-package com.github.nikodemin.cdms.validator
+package com.github.nikodemin.validation
 
 case class Error(path: String, errorMessage: String)

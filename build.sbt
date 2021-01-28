@@ -1,14 +1,20 @@
-name := "CDMS"
+import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.dockerExposedPorts
+import sbt.Keys.version
 
-version := "0.1"
+lazy val coreProject = (project in file("."))
+  .enablePlugins(JavaAppPackaging, DockerPlugin, AkkaGrpcPlugin)
+  .settings(
+    scalaVersion := "2.13.1",
+    name := "CDMS",
+    version := "0.1",
+    libraryDependencies ++= BuildConfig.projectDependencies,
+    dockerBaseImage := "adoptopenjdk/openjdk15:alpine",
+    dockerExposedPorts += 9002
+  )
+  .dependsOn(validationProject)
 
-scalaVersion := "2.13.4"
-
-libraryDependencies ++= BuildConfig.projectDependencies
-
-
-dockerBaseImage := "adoptopenjdk/openjdk15:alpine"
-
-dockerExposedPorts += 9002
-
-enablePlugins(JavaAppPackaging, DockerPlugin, AkkaGrpcPlugin)
+lazy val validationProject = (project in file("validation"))
+  .settings(
+    scalaVersion := "2.13.1",
+    libraryDependencies ++= BuildConfig.monocleDependencies
+  )
