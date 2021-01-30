@@ -1,6 +1,6 @@
 package com.github.nikodemin.cdms.validation
 
-import com.github.nikodemin.cdms.proto._
+import com.github.nikodemin.cdms.proto.cdms._
 import com.github.nikodemin.validation.{Fields, FieldsOption, Validators}
 
 object OrderFields {

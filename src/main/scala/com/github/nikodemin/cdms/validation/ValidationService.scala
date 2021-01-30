@@ -2,7 +2,7 @@ package com.github.nikodemin.cdms.validation
 
 import java.time.LocalDate
 
-import com.github.nikodemin.cdms.proto._
+import com.github.nikodemin.cdms.proto.cdms._
 import com.github.nikodemin.cdms.validation.OrderFields._
 import com.github.nikodemin.validation.Error
 import com.github.nikodemin.validation.Implicits._
