@@ -4,23 +4,23 @@ import java.time.LocalDate
 
 import com.github.nikodemin.cdms.proto.cdms._
 import com.github.nikodemin.cdms.validation.OrderFields._
-import com.github.nikodemin.validation.Error
 import com.github.nikodemin.validation.Implicits._
+import com.github.nikodemin.validation.ValidationError
 import com.github.nikodemin.validation.Validators.{Conditional, Field}
 
 object ValidationService {
   val currencies = Set("RUB", "EUR", "USD")
 
-  def validateOrder(implicit orderAdd: OrderAdd): Seq[Error] = {
+  def validateOrder(implicit orderAdd: OrderAdd): Seq[ValidationError] = {
 
-    def validateCustomerId: Seq[Error] = orderFields.customerId.validateUUID
+    def validateCustomerId: Seq[ValidationError] = orderFields.customerId.validateUUID
 
-    def validateProductIds: Seq[Error] = Conditional(orderFields.productIds.validateNotEmpty)
+    def validateProductIds: Seq[ValidationError] = Conditional(orderFields.productIds.validateNotEmpty)
       .ifPassed {
         orderFields.productIds.validateUUIDElements
       }
 
-    def validatePaymentInfo: Seq[Error] = {
+    def validatePaymentInfo: Seq[ValidationError] = {
 
       val amountField = orderFields.paymentInfo >=> paymentInfoFields.amount
       val currencyField = orderFields.paymentInfo >=> paymentInfoFields.currency
@@ -52,7 +52,7 @@ object ValidationService {
         currencyField.validateOneOfOrAbsent(currencies.toSeq: _*)
     }
 
-    def validateDelivery: Seq[Error] = if (orderAdd.delivery.isCourierDelivery) {
+    def validateDelivery: Seq[ValidationError] = if (orderAdd.delivery.isCourierDelivery) {
       val courierDeliveryField = orderFields.delivery >=> deliveryFields.courierDelivery
       val addressInfoField = courierDeliveryField >=> courierDeliveryFields.addressInfo
       val countryField = addressInfoField >=> addressInfoFields.country
@@ -100,7 +100,7 @@ object ValidationService {
             cityField.validateLength(100)
         }
     } else {
-      Seq(Error("orderAdd.delivery", "Delivery is not set"))
+      Seq(ValidationError("orderAdd.delivery", "Delivery is not set"))
     }
 
     validateDelivery ++ validateCustomerId ++ validateProductIds ++ validatePaymentInfo

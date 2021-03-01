@@ -15,6 +15,12 @@ object BuildConfig {
     val logback = "1.2.3"
 
     val `grpc-netty` = "1.35.0"
+
+    val `neo4j-driver` = "4.2.1"
+
+    val zio = "1.0.4"
+    val `zio-logging` = "0.5.6"
+    val `zio-config` = "1.0.0-RC32"
   }
 
   val testDependencies = Seq(
@@ -23,6 +29,9 @@ object BuildConfig {
     "org.scalamock" %% "scalamock" % versions.scalamock,
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % versions.`scalacheck-shapeless_1.14`,
     "com.github.chocpanda" %% "scalacheck-magnolia" % versions.`scalacheck-magnolia`,
+    "dev.zio" %% "zio-test" % versions.zio,
+    "dev.zio" %% "zio-test-sbt" % versions.zio,
+    "dev.zio" %% "zio-test-magnolia" % versions.zio
   ).map(_ % Test)
 
   val logDependencies = Seq(
@@ -30,9 +39,18 @@ object BuildConfig {
     "ch.qos.logback" % "logback-classic" % versions.logback
   )
 
-  val zioDependencies = Seq(
+  val zioGrpcDependencies = Seq(
     "io.grpc" % "grpc-netty" % versions.`grpc-netty`,
     "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion
+  )
+
+  val zioDependencies = Seq(
+    "dev.zio" %% "zio-macros" % versions.zio,
+    "dev.zio" %% "zio" % versions.zio,
+    "dev.zio" %% "zio-config" % versions.`zio-config`,
+    "dev.zio" %% "zio-config-typesafe" % versions.`zio-config`,
+    "dev.zio" %% "zio-logging" % versions.`zio-logging`,
+    "dev.zio" %% "zio-logging-slf4j" % versions.`zio-logging`
   )
 
   val monocleDependencies = Seq(
@@ -40,5 +58,10 @@ object BuildConfig {
     "com.github.julien-truffaut" %% "monocle-macro"
   ).map(_ % versions.monocle)
 
-  val projectDependencies: Seq[ModuleID] = testDependencies ++ logDependencies ++ zioDependencies ++ monocleDependencies
+  val neo4jDependencies = Seq(
+    "org.neo4j.driver" % "neo4j-java-driver" % versions.`neo4j-driver`
+  )
+
+  val projectDependencies: Seq[ModuleID] = testDependencies ++ logDependencies ++ zioGrpcDependencies ++ monocleDependencies ++
+    zioDependencies ++ neo4jDependencies
 }

@@ -1,4 +1,4 @@
-package com.github.nikodemin.cdms.validator
+package com.github.nikodemin.cdms.validation
 
 import java.time.LocalDate
 import java.util.UUID
@@ -6,17 +6,16 @@ import java.util.UUID
 import com.github.nikodemin.cdms.proto.cdms.OrderAdd.Delivery
 import com.github.nikodemin.cdms.proto.cdms.PaymentInfo.PaymentMethod
 import com.github.nikodemin.cdms.proto.cdms._
-import com.github.nikodemin.cdms.validation.ValidationService
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.slf4j.LoggerFactory
 
-class ValidatorsTest extends AnyWordSpecLike
+class ValidatorsSpec extends AnyWordSpecLike
   with Matchers
   with ScalaCheckPropertyChecks {
-  val log = LoggerFactory.getLogger(classOf[ValidatorsTest])
+  val log = LoggerFactory.getLogger(classOf[ValidatorsSpec])
   val currencies = Set("RUB", "EUR", "USD")
 
   val localDateGen: Gen[LocalDate] = {
