@@ -14,13 +14,13 @@ object BuildConfig {
     val slf4j = "1.7.30"
     val logback = "1.2.3"
 
-    val `grpc-netty` = "1.35.0"
-
     val `neo4j-driver` = "4.2.1"
 
     val zio = "1.0.4"
     val `zio-logging` = "0.5.6"
     val `zio-config` = "1.0.0-RC32"
+
+    val caliban = "0.9.5"
   }
 
   val testDependencies = Seq(
@@ -37,11 +37,6 @@ object BuildConfig {
   val logDependencies = Seq(
     "org.slf4j" % "slf4j-api" % versions.slf4j,
     "ch.qos.logback" % "logback-classic" % versions.logback
-  )
-
-  val zioGrpcDependencies = Seq(
-    "io.grpc" % "grpc-netty" % versions.`grpc-netty`,
-    "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion
   )
 
   val zioDependencies = Seq(
@@ -62,6 +57,11 @@ object BuildConfig {
     "org.neo4j.driver" % "neo4j-java-driver" % versions.`neo4j-driver`
   )
 
-  val projectDependencies: Seq[ModuleID] = testDependencies ++ logDependencies ++ zioGrpcDependencies ++ monocleDependencies ++
-    zioDependencies ++ neo4jDependencies
+  val calibanDependencies = Seq(
+    "com.github.ghostdogpr" %% "caliban",
+    "com.github.ghostdogpr" %% "caliban-http4s"
+  ).map(_ % versions.caliban)
+
+  val projectDependencies: Seq[ModuleID] = testDependencies ++ logDependencies ++ monocleDependencies ++
+    zioDependencies ++ neo4jDependencies ++ calibanDependencies
 }

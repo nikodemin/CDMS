@@ -1,0 +1,223 @@
+scalar LocalDate
+scalar Long
+
+schema {
+    query: Query
+    mutation: Mutation
+    subscription: Subscription
+}
+
+### Queries ###
+type Query {
+    getAllProducts(pagination: Pagination): [Product!]!
+}
+
+input Pagination {
+    offset: Long!
+    quantity: Long!
+}
+
+### Mutations ###
+
+type Mutation {
+
+}
+
+## Subscriptions ##
+
+type Subscription {
+
+}
+
+### Type definitions ###
+
+# Payment
+
+type CreditCardIn {
+    number: String!
+    cardHolder: String!
+    dueDate: LocalDate!
+    cvv: Int!
+}
+
+enum Currency {
+    RUB
+    EUR
+    USD
+}
+
+interface PaymentInfo {
+    amount: Long!
+    currency: Currency
+}
+
+type CashPayment implements PaymentInfo {
+    amount: Long!
+    currency: Currency
+}
+
+type CreditCardPayment implements PaymentInfo {
+    amount: Long!
+    currency: Currency
+
+    creditCard: CreditCardIn!
+}
+
+# Order
+
+enum OrderState {
+    PENDING
+    ACKNOWLEDGE
+    IN_DELIVERY
+    CANCELLED
+    COMPLETED
+    REJECTED
+    FAILED
+}
+
+type Order {
+    state: OrderState
+    paymentInfo: PaymentInfo!
+    delivery: Delivery!
+    customer: Customer!
+    products: [Product!]!
+}
+
+# Delivery
+
+union Delivery = CourierDelivery | PostalDelivery | PickUpDelivery
+
+type CourierDelivery {
+    courier: Courier!
+    address: AddressInfo!
+}
+
+type PostalDelivery {
+    county: String
+    city: String
+    zipCode: String!
+}
+
+type PickUpDelivery {
+    pickUpPoint: AddressInfo!
+}
+
+# Product
+
+type Product {
+    name: String!
+    quantity: Int!
+    description: String
+    price: Long!
+    images: [Image!]!
+}
+
+# Person
+
+interface Person {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int
+    email: String!
+    password: String!
+    role: Role!
+}
+
+enum Role {
+    CUSTOMER
+    COURIER
+    ADMIN
+    MANAGER
+    STORE_KEEPER
+}
+
+type Customer implements Person {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int
+    email: String!
+    password: String!
+    role: Role!
+
+    phoneNumber: String!
+    avatar: String
+    bio: String
+    status: String
+}
+
+type Courier implements Person {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int
+    email: String!
+    password: String!
+    role: Role!
+
+    phoneNumber: String!
+}
+
+type Admin implements Person {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int
+    email: String!
+    password: String!
+    role: Role!
+}
+
+type Manager implements Person {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int
+    email: String!
+    password: String!
+    role: Role!
+
+    phoneNumber: String!
+}
+
+type StoreKeeper implements Person {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int
+    email: String!
+    password: String!
+    role: Role!
+
+    phoneNumber: String!
+}
+
+# Comment
+
+type Comment {
+    author: Person!
+    text: String!
+    product: Product!
+    images: [Image!]!
+    subthread: [Comment!]!
+    estimation: Int
+}
+
+# common models and misc
+
+type Image {
+    name: String
+    path: String!
+    extension: String
+    author: Person
+}
+
+type AddressInfo {
+    country: String!
+    city: String!
+    street: String!
+    homeNumber: Int!
+    homeNumberAddition: String
+    flatNumber: Int!
+}
