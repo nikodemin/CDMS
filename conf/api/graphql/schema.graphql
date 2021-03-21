@@ -1,4 +1,4 @@
-scalar LocalDate
+scalar OffsetDateTime
 scalar Long
 
 schema {
@@ -7,36 +7,344 @@ schema {
     subscription: Subscription
 }
 
+## Subscriptions ##
+
+type Subscription {
+    subscribeOnOrderChange(orderId: ID!): Order!
+}
+
 ### Queries ###
 type Query {
-    getAllProducts(pagination: Pagination): [Product!]!
+    # Products
+    getAllProducts(pagination: Pagination, orderBy: ProductOrderBy): [Product!]!
+    searchProducts(criteria: ProductCriteria!, pagination: Pagination, orderBy: ProductOrderBy): [Product!]!
+
+    # Comments
+    getComments(productId: ID!, rootComment: ID, pagination: Pagination, orderBy: CommentOrderBy): [Comment!]!
+
+    # Orders
+    searchOrders(criteria: OrderCriteria!, orderBy: OrderOrderBy): [Order!]!
+    getOrdersById(ids: [ID!]!, orderBy: OrderOrderBy): [Order!]!
+
+    # Person
+    getPersonsById(ids: [ID!]!): [Person!]!
+
+    # AddressInfo
+    searchAddressInfo(criteria: AddressInfoCriteria!, pagination: Pagination): [AddressInfo!]!
 }
 
 input Pagination {
-    offset: Long!
-    quantity: Long!
+    offset: Long = 0
+    quantity: Long = 100
+}
+
+input ProductCriteria {
+    nameContaining: String
+    minQuantity: Int
+    minPrice: Int
+    maxPrice: Int
+}
+
+enum ProductOrderBy {
+    POPULAR
+    CHEAPEST
+    EXPENSIVE
+    HIGH_ESTIMATION
+    HIGH_COMMENT_COUNT
+}
+
+input OrderCriteria {
+    startDate: OffsetDateTime
+    endDate: OffsetDateTime
+    state: OrderState
+}
+
+enum OrderOrderBy {
+    NEWEST
+    OLDEST
+    STATE
+}
+
+enum CommentOrderBy {
+    NEWEST
+    OLDEST
+    ESTIMATION
 }
 
 ### Mutations ###
 
 type Mutation {
+    # Product
+    addProduct(product: ProductAdd!): Product!
+    modifyProduct(product: ProductModify!): Product!
+    deleteProductsById(ids: [ID!]!): [Product!]!
 
+    # Person
+    addCustomer(customer: CustomerAdd!): Customer!
+    addCourier(courier: CourierAdd!): Courier!
+    addAdmin(admin: AdminAdd!): Admin!
+    addManager(manager: ManagerAdd!): Manager!
+    addStoreKeeper(storeKeeper: StoreKeeperAdd!): StoreKeeper!
+    modifyCustomer(customer: CustomerModify!): Customer!
+    modifyCourier(courier: CourierModify!): Courier!
+    modifyAdmin(admin: AdminModify!): Admin!
+    modifyManager(manager: ManagerModify!): Manager!
+    modifyStoreKeeper(storeKeeper: StoreKeeperModify!): StoreKeeper!
+    deletePersonsById(ids: [ID!]!): [Person!]!
+
+    # Comment
+    addComment(comment: CommentAdd!): Comment!
+    modifyComment(comment: CommentModify!): Comment!
+    deleteCommentsById(ids: [ID!]!): [Comment!]!
+
+    # Order
+    addOrder(order: OrderAdd!): Order!
+    changeOrderState(orderId: ID!, newState: OrderState!): Order!
+
+    # AddressInfo
+    addAddressInfoToCustomer(customerId: ID!, addressInfo: AddressInfoAdd!): Person!
 }
 
-## Subscriptions ##
+# Product
 
-type Subscription {
-
+input ProductAdd {
+    name: String!
+    quantity: Int!
+    description: String
+    price: Long!
+    images: [ImageIn!]!
 }
 
-### Type definitions ###
+input ProductModify {
+    id: ID!
+    name: String
+    quantity: Int
+    description: String
+    price: Long
+    images: [ImageIn!]
+}
+
+# Common
+
+input ImageIn {
+    date: OffsetDateTime
+    name: String
+    path: String!
+    extension: String
+    authorId: ID!
+}
+
+# Person
+
+input CustomerAdd {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int
+    email: String!
+    password: String!
+
+    phoneNumber: String!
+    avatar: ImageIn
+    bio: String
+    status: String
+}
+
+input CourierAdd {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int
+    email: String!
+    password: String!
+
+    phoneNumber: String!
+}
+
+input AdminAdd {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int
+    email: String!
+    password: String!
+}
+
+input ManagerAdd {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int
+    email: String!
+    password: String!
+
+    phoneNumber: String!
+}
+
+input StoreKeeperAdd {
+    firstName: String!
+    lastName: String!
+    middleName: String
+    age: Int
+    email: String!
+    password: String!
+
+    phoneNumber: String!
+}
+
+input CustomerModify {
+    id: ID!
+    firstName: String
+    lastName: String
+    middleName: String
+    age: Int
+    email: String
+    password: String
+
+    phoneNumber: String
+    avatar: ImageIn
+    bio: String
+    status: String
+}
+
+input CourierModify {
+    id: ID!
+    firstName: String
+    lastName: String
+    middleName: String
+    age: Int
+    email: String
+    password: String
+
+    phoneNumber: String
+}
+
+input AdminModify {
+    id: ID!
+    firstName: String
+    lastName: String
+    middleName: String
+    age: Int
+    email: String
+    password: String
+}
+
+input ManagerModify {
+    id: ID!
+    firstName: String
+    lastName: String
+    middleName: String
+    age: Int
+    email: String
+    password: String
+
+    phoneNumber: String
+}
+
+input StoreKeeperModify {
+    id: ID!
+    firstName: String
+    lastName: String
+    middleName: String
+    age: Int
+    email: String
+    password: String
+
+    phoneNumber: String
+}
+
+# Comment
+
+input CommentAdd {
+    root: ID!
+    authorId: ID!
+    text: String!
+    productId: ID!
+    images: [ImageIn!]!
+}
+
+input CommentModify {
+    id: ID!
+    text: String
+    images: [ImageIn!]
+}
+
+# Order
+
+input OrderAdd {
+    date: OffsetDateTime!
+    paymentInfo: PaymentInfoAdd!
+    delivery: DeliveryAdd!
+    customerId: ID!
+    productIds: [ID!]!
+}
+
+enum PaymentType {
+    CASH
+    CARD
+}
+
+input PaymentInfoAdd {
+    amount: Long!
+    currency: Currency!
+    type: PaymentType!
+
+    creditCard: CreditCardIn
+}
+
+input CreditCardIn {
+    number: String!
+    cardHolder: String!
+    dueDate: OffsetDateTime!
+    cvv: Int!
+}
+
+enum DeliveryType {
+    COURIER
+    POSTAL
+    PICK_UP
+}
+
+input DeliveryAdd {
+    type: DeliveryType!
+
+    courierId: ID
+    courierDeliveryAddress: AddressInfoAdd
+
+    postalDeliveryCounty: String
+    postalDeliveryCity: String
+    postalDeliveryZipCode: String
+
+    pickUpPointId: ID
+}
+
+input AddressInfoAdd {
+    country: String!
+    city: String!
+    street: String!
+    homeNumber: Int!
+    homeNumberAddition: String
+    flatNumber: Int!
+}
+
+input AddressInfoCriteria {
+    customerId: ID
+    country: String
+    city: String
+    street: String
+    homeNumber: Int
+    homeNumberAddition: String
+    flatNumber: Int
+}
+
+### Output type definitions ###
 
 # Payment
 
-type CreditCardIn {
+type CreditCard {
     number: String!
     cardHolder: String!
-    dueDate: LocalDate!
+    dueDate: OffsetDateTime!
     cvv: Int!
 }
 
@@ -48,19 +356,19 @@ enum Currency {
 
 interface PaymentInfo {
     amount: Long!
-    currency: Currency
+    currency: Currency!
 }
 
 type CashPayment implements PaymentInfo {
     amount: Long!
-    currency: Currency
+    currency: Currency!
 }
 
 type CreditCardPayment implements PaymentInfo {
     amount: Long!
-    currency: Currency
+    currency: Currency!
 
-    creditCard: CreditCardIn!
+    creditCard: CreditCard!
 }
 
 # Order
@@ -76,6 +384,8 @@ enum OrderState {
 }
 
 type Order {
+    id: ID
+    date: OffsetDateTime
     state: OrderState
     paymentInfo: PaymentInfo!
     delivery: Delivery!
@@ -105,6 +415,7 @@ type PickUpDelivery {
 # Product
 
 type Product {
+    id: ID
     name: String!
     quantity: Int!
     description: String
@@ -115,6 +426,7 @@ type Product {
 # Person
 
 interface Person {
+    id: ID
     firstName: String!
     lastName: String!
     middleName: String
@@ -133,6 +445,7 @@ enum Role {
 }
 
 type Customer implements Person {
+    id: ID
     firstName: String!
     lastName: String!
     middleName: String
@@ -142,12 +455,14 @@ type Customer implements Person {
     role: Role!
 
     phoneNumber: String!
-    avatar: String
+    avatar: Image
     bio: String
     status: String
+    addresses: [AddressInfo!]!
 }
 
 type Courier implements Person {
+    id: ID
     firstName: String!
     lastName: String!
     middleName: String
@@ -160,6 +475,7 @@ type Courier implements Person {
 }
 
 type Admin implements Person {
+    id: ID
     firstName: String!
     lastName: String!
     middleName: String
@@ -170,6 +486,7 @@ type Admin implements Person {
 }
 
 type Manager implements Person {
+    id: ID
     firstName: String!
     lastName: String!
     middleName: String
@@ -182,6 +499,7 @@ type Manager implements Person {
 }
 
 type StoreKeeper implements Person {
+    id: ID
     firstName: String!
     lastName: String!
     middleName: String
@@ -196,6 +514,8 @@ type StoreKeeper implements Person {
 # Comment
 
 type Comment {
+    id: ID
+    date: OffsetDateTime
     author: Person!
     text: String!
     product: Product!
@@ -207,6 +527,8 @@ type Comment {
 # common models and misc
 
 type Image {
+    id: ID
+    date: OffsetDateTime
     name: String
     path: String!
     extension: String
@@ -214,6 +536,7 @@ type Image {
 }
 
 type AddressInfo {
+    id: ID
     country: String!
     city: String!
     street: String!
