@@ -15,12 +15,14 @@ object BuildConfig {
     val logback = "1.2.3"
 
     val `neo4j-driver` = "4.2.1"
+    val `gremlin-scala` = "3.4.7.11"
+    val `neo4j-gremlin-bolt` = "0.4.6"
 
     val zio = "1.0.4"
     val `zio-logging` = "0.5.6"
     val `zio-config` = "1.0.0-RC32"
 
-    val caliban = "0.9.5"
+    val caliban = "0.9.5+43-de5eea00-SNAPSHOT"
   }
 
   val testDependencies = Seq(
@@ -53,8 +55,10 @@ object BuildConfig {
     "com.github.julien-truffaut" %% "monocle-macro"
   ).map(_ % versions.monocle)
 
-  val neo4jDependencies = Seq(
-    "org.neo4j.driver" % "neo4j-java-driver" % versions.`neo4j-driver`
+  val dbDependencies = Seq(
+    "org.neo4j.driver" % "neo4j-java-driver" % versions.`neo4j-driver`,
+    "com.michaelpollmeier" %% "gremlin-scala" % versions.`gremlin-scala`,
+    "com.steelbridgelabs.oss" % "neo4j-gremlin-bolt" % versions.`neo4j-gremlin-bolt`
   )
 
   val calibanDependencies = Seq(
@@ -63,5 +67,5 @@ object BuildConfig {
   ).map(_ % versions.caliban)
 
   val projectDependencies: Seq[ModuleID] = testDependencies ++ logDependencies ++ monocleDependencies ++
-    zioDependencies ++ neo4jDependencies ++ calibanDependencies
+    zioDependencies ++ dbDependencies ++ calibanDependencies
 }
