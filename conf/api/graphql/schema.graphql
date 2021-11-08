@@ -131,7 +131,7 @@ input ImageIn {
     name: String
     path: String!
     extension: String
-    authorId: ID!
+    authorId: ID
 }
 
 # Person
@@ -328,7 +328,6 @@ input AddressInfoAdd {
 }
 
 input AddressInfoCriteria {
-    customerId: ID
     country: String
     city: String
     street: String
@@ -384,7 +383,7 @@ enum OrderState {
 }
 
 type Order {
-    id: ID
+    id: ID!
     date: OffsetDateTime
     state: OrderState
     paymentInfo: PaymentInfo!
@@ -415,7 +414,7 @@ type PickUpDelivery {
 # Product
 
 type Product {
-    id: ID
+    id: ID!
     name: String!
     quantity: Int!
     description: String
@@ -426,33 +425,23 @@ type Product {
 # Person
 
 interface Person {
-    id: ID
+    id: ID!
     firstName: String!
     lastName: String!
     middleName: String
     age: Int
     email: String!
     password: String!
-    role: Role!
-}
-
-enum Role {
-    CUSTOMER
-    COURIER
-    ADMIN
-    MANAGER
-    STORE_KEEPER
 }
 
 type Customer implements Person {
-    id: ID
+    id: ID!
     firstName: String!
     lastName: String!
     middleName: String
     age: Int
     email: String!
     password: String!
-    role: Role!
 
     phoneNumber: String!
     avatar: Image
@@ -462,51 +451,47 @@ type Customer implements Person {
 }
 
 type Courier implements Person {
-    id: ID
+    id: ID!
     firstName: String!
     lastName: String!
     middleName: String
     age: Int
     email: String!
     password: String!
-    role: Role!
 
     phoneNumber: String!
 }
 
 type Admin implements Person {
-    id: ID
+    id: ID!
     firstName: String!
     lastName: String!
     middleName: String
     age: Int
     email: String!
     password: String!
-    role: Role!
 }
 
 type Manager implements Person {
-    id: ID
+    id: ID!
     firstName: String!
     lastName: String!
     middleName: String
     age: Int
     email: String!
     password: String!
-    role: Role!
 
     phoneNumber: String!
 }
 
 type StoreKeeper implements Person {
-    id: ID
+    id: ID!
     firstName: String!
     lastName: String!
     middleName: String
     age: Int
     email: String!
     password: String!
-    role: Role!
 
     phoneNumber: String!
 }
@@ -514,7 +499,7 @@ type StoreKeeper implements Person {
 # Comment
 
 type Comment {
-    id: ID
+    id: ID!
     date: OffsetDateTime
     author: Person!
     text: String!
@@ -527,16 +512,16 @@ type Comment {
 # common models and misc
 
 type Image {
-    id: ID
+    id: ID!
     date: OffsetDateTime
     name: String
     path: String!
     extension: String
-    author: Person
+    authorId: ID
 }
 
 type AddressInfo {
-    id: ID
+    id: ID!
     country: String!
     city: String!
     street: String!
